@@ -50,6 +50,14 @@ uint8_t simpFlag = 0;
 int trig_camera = 2;
 bool cameraRecording = false;
 bool tethered;
+bool voltageDivided; //cansat acildiginda voltaji ayarlamak icin variable
+
+#define NUM_SAMPLES 10
+
+int volt_pin = A0;
+float sensorValue = 0;
+float Voltage = 0;
+unsigned char sample_count = 0;
 
 unsigned long cameraStartTime;
 unsigned long currentTime;
@@ -232,7 +240,16 @@ void setup() {
   
 
 }
-
+void voltageDivider(){
+  while (sample_count < NUM_SAMPLES){
+    sensorValue += analogRead(volt_pin);
+    sample_count++;
+    delay(1);
+  }
+  Voltage = sensorValue/NUM_SAMPLES *(5/1023.0)*(3.9+3.3)/(3.3);// burada 5volt arduino için ayarlandı bu 3.3volta düşürülecek 
+  sample_count = 0;
+  sensorValue = 0;
+}
 void loop() {
   
   bmeTask();
@@ -254,5 +271,6 @@ void loop() {
   commandTask(); // 
   writeEeprom();
   buzzerTask();
+  voltageDivider();
 
 }
