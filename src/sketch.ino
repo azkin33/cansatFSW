@@ -76,7 +76,7 @@ SoftwareSerial gpsSerial(RXPin, TXPin);
 #define SEALEVELPRESSURE_HPA (1013.25)
 #define TETHER_ALTITUDE (300)
 
-void getStr(ContainerTelemetry ct){
+void getStr(){
   char string[255] = {0};
   strcpy(string,"1002,");
   char current[16] = {0};
@@ -301,6 +301,7 @@ void voltageDivider(){
   Voltage = sensorValue/NUM_SAMPLES *(5/1023.0)*(3.9+3.3)/(3.3);// burada 5volt arduino için ayarlandı bu 3.3volta düşürülecek 
   sample_count = 0;
   sensorValue = 0;
+  ct.voltage = Voltage;
 }
 void loop() {
   
@@ -324,5 +325,5 @@ void loop() {
   writeEeprom();
   buzzerTask();
   voltageDivider();
-
+  getStr();
 }
