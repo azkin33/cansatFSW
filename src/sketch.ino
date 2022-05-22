@@ -1,5 +1,6 @@
 #include <TinyGPS++.h>
-
+#include <stdio.h>
+#include <string.h>
 #include <Arduino.h>
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
@@ -17,7 +18,7 @@ struct GPS_Time{
 };
 struct ContainerTelemetry{
   int team_ID = 1002;
-  String MISSION_TIME;
+  char MISSION_TIME[3] ="Q";
   int packet_count;
   char packet_type;
   int mode;
@@ -25,13 +26,13 @@ struct ContainerTelemetry{
   double altitude;
   double temp;
   double voltage;
-  GPS_Time gps_time;
+  char gps_time[32];
   double gps_latitude;
   double gps_longtitude;
   double gps_altitude;
   int gps_sats;
   int software_state;
-  String cmd_echo;
+  char cmd_echo[32];
 };
 
 Adafruit_BME280 bme;
@@ -75,6 +76,45 @@ SoftwareSerial gpsSerial(RXPin, TXPin);
 #define SEALEVELPRESSURE_HPA (1013.25)
 #define TETHER_ALTITUDE (300)
 
+void getStr(ContainerTelemetry ct){
+  char string[255] = {0};
+  strcpy(string,"1002,");
+  char current[16] = {0};
+  strcat(string,ct.MISSION_TIME);
+  sprintf(current,"%d,",ct.packet_count);
+  strcat(string,current);
+  strcat(string,"C");
+  sprintf(current,"%d,",ct.mode);
+  strcat(string,current);
+  sprintf(current,"%d,",ct.tp_released);
+  strcat(string,current);
+  sprintf(current,"%lf,",ct.altitude);
+  strcat(string,current);
+
+  sprintf(current,"%lf,",ct.temp);
+  strcat(string,current);
+
+  sprintf(current,"%lf,",ct.voltage);
+  strcat(string,current);
+
+  strcat(string,ct.gps_time);
+  
+  sprintf(current,"%lf,",ct.gps_latitude);
+  strcat(string,current);
+  sprintf(current,"%lf,",ct.gps_longtitude);
+  strcat(string,current);
+  sprintf(current,"%lf,",ct.gps_altitude);
+  strcat(string,current);
+  sprintf(current,"%d,",ct.gps_sats);
+  strcat(string,current);
+  sprintf(current,"%d,",ct.software_state);
+  strcat(string,current);
+
+  strcat(string,ct.cmd_echo);
+
+  Serial.print(string);
+
+}
 
 void bmeSetup(){
   
@@ -116,6 +156,7 @@ void gpsSetup(){
   gpsSerial.begin(GPSBaud);
 }
 void gpsTask(){
+  GPS_Time gps_time;
   if(gps.satellites.isValid()){
     ct.gps_sats =(int) gps.satellites.value();
   }
@@ -126,12 +167,23 @@ void gpsTask(){
   if(gps.altitude.isValid()){
     ct.gps_altitude = gps.altitude.meters();
   }
-  ct.gps_time.day = gps.date.day();
-  ct.gps_time.month = gps.date.month();
-  ct.gps_time.year = gps.date.year();
-  ct.gps_time.second = gps.time.second();
-  ct.gps_time.minute = gps.time.minute();
-  ct.gps_time.hour = gps.time.hour();
+  gps_time.day = gps.date.day();
+  gps_time.month = gps.date.month();
+  gps_time.year = gps.date.year();
+  gps_time.second = gps.time.second();
+  gps_time.minute = gps.time.minute();
+  gps_time.hour = gps.time.hour();
+  char gpsTime[32];
+  char current[5];
+  sprintf(current,"%d:",gps_time.hour);
+  strcat(gpsTime,current);
+  sprintf(current,"%d:",gps_time.minute);
+  strcat(gpsTime,current);
+  sprintf(current,"%d",gps_time.second);
+  
+  memset(ct.gps_time,0,strlen(ct.gps_time));
+  strcpy(ct.gps_time,gpsTime);
+    
 }
 
 void containerCameraSetup(){
